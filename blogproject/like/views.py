@@ -23,13 +23,14 @@ class LikeAPI(APIView):
                 return Response({
                     "message":"Post unavailable"
                 }, status=status.HTTP_404_NOT_FOUND)
+        
         like = Like.objects.filter(user = request.user,post=post)
         if like.exists():
             if post.like_count>0:
                 like.delete()
                 post.like_count = post.like_count - 1
                 post.save()
-            return Response({
+                return Response({
                 "message":"Post unliked"
             },status=status.HTTP_200_OK)
 

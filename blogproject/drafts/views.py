@@ -25,7 +25,7 @@ class PublishDraftAPI(APIView):
         serializer = DraftSerializer(post)
         if not post.author == request.user:
             return Response({
-                "error":"Post unavailable"
+                "message":"Post unavailable"
                 },status=status.HTTP_401_UNAUTHORIZED)
         
         if post.is_published == False:
@@ -37,7 +37,7 @@ class PublishDraftAPI(APIView):
             })
         
         return Response({
-            "Error":"Post is already published"
+            "message":"Post is already published"
         },status=status.HTTP_400_BAD_REQUEST)
 
 class UnpublishPostAPI(APIView):
@@ -48,7 +48,7 @@ class UnpublishPostAPI(APIView):
         serializer = DraftSerializer(post)
         if not post.author == request.user:
             return Response({
-                "Error":"You are not the author"
+                "message":"You are not the author"
             }, status=status.HTTP_401_UNAUTHORIZED)
         
         if post.is_published == True:
@@ -60,5 +60,5 @@ class UnpublishPostAPI(APIView):
             },status=status.HTTP_200_OK)
         
         return Response({
-            "Error":"Post is not published yet."
+            "message":"Post is not published yet."
         },status=status.HTTP_400_BAD_REQUEST)

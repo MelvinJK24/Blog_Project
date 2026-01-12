@@ -54,7 +54,7 @@ class ViewPostAPI(APIView):
 
         if not post.is_active:
             return Response({
-                "Error":"Post not found"
+                "message":"Post not found"
             }, status=status.HTTP_404_NOT_FOUND)
         
         if  post.is_published == False and (request.user.profile.role != "admin" and post.author != request.user):
@@ -84,8 +84,8 @@ class UpdatePostAPI(APIView):
                 "message" : "Post updated successfully",
                 "data" : serializer.data
             }, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors,status=status.HTTP_403_FORBIDDEN)
+        
+        return Response(serializer.errors,status=status.HTTP_403_FORBIDDEN)
         
 class DeletePostAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -101,7 +101,6 @@ class DeletePostAPI(APIView):
         if request.user.profile.role == "admin":
             post.is_active = False
             post.save()
-
             return Response({"message":"Post deleted successfully"},status=status.HTTP_200_OK)
         
         return Response({"message":"You don't have access to delete the post"},status=status.HTTP_400_BAD_REQUEST)
