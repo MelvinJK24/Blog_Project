@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from permissions import IsAdmin, IsAuthor, IsReader
@@ -26,10 +27,13 @@ class ListCategoryAPI(APIView):
     permission_classes= [IsAuthenticated]
 
     def get(self, request):
-        category = Category.objects.filter(is_active = True)
-        serializer = CategorySerializer(category, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        categories = Category.objects.filter(is_active=True).order_by("id")
+        paginator = PageNumberPagination()
+        paginator.page_size = 5  
+        paginated_categories = paginator.paginate_queryset(categories, request)
+        serializer = CategorySerializer(paginated_categories, many=True)
+        return paginator.get_paginated_response(serializer.data)
+        
 class UpdateCategoryAPI(APIView):
     permission_classes = [IsAdmin]
 

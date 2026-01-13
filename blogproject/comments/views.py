@@ -1,10 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
-from rest_framework.permissions import IsAuthenticated
 
 from permissions import IsAdmin, IsAuthor, IsReader
 from posts.models import Post
@@ -37,10 +38,13 @@ class ListCommentsAPI(APIView):
     
     def get(self, request, id):
         post_id = get_object_or_404(Post,id=id)
-        comments = Comment.objects.filter(post = post_id)
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        comments = Comment.objects.filter(post = post_id).order_by("id")
+        paginator = PageNumberPagination()
+        paginator.page_size = 5  
+        paginated_comments = paginator.paginate_queryset(comments, request)
+        serializer = CommentSerializer(paginated_comments, many=True)
+        return paginator.get_paginated_response(serializer.data)
+        
 class EditCommentAPI(APIView):
     permission_classes = [IsAuthenticated]
 

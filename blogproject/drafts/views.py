@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
@@ -14,9 +15,13 @@ from .serializer import DraftSerializer
 class ListDraftsAPI(APIView):
     permission_classes = [IsAuthor]
     def get(self, request):
-        drafts = Post.objects.filter(is_published=False,is_active=True,author = request.user)
-        serializer = DraftSerializer(drafts,many=True)  
-        return Response(serializer.data,status=status.HTTP_200_OK)
+        drafts = Post.objects.filter(is_published=False,is_active=True,author = request.user).order_by("created_at")
+        paginator = PageNumberPagination()
+        paginator.page_size = 5 
+
+        paginated_drafts = paginator.paginate_queryset(drafts, request)
+        serializer = DraftSerializer(paginated_drafts, many=True)
+        return paginator.get_paginated_response(serializer.data)
     
 class PublishDraftAPI(APIView):
     permission_classes = [IsAuthor]

@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
@@ -119,10 +120,14 @@ class UpdateProfileAPI(APIView):
 class ListUsersAPI(APIView):
     permission_classes = [IsAdmin]
 
-    def get(self,request):
-        profile = Profile.objects.filter(is_active=True)
-        serializer = ProfileSerializer(profile, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get(self, request):
+        profiles = Profile.objects.filter(is_active=True).order_by("id")
+        paginator = PageNumberPagination()
+        paginator.page_size = 5  
+        paginated_profiles = paginator.paginate_queryset(profiles, request)
+        serializer = ProfileSerializer(paginated_profiles, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
     
 class DeleteUserAPI(APIView):
     permission_classes = [IsAdmin]

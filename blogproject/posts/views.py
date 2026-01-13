@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
@@ -19,7 +20,7 @@ class CreatePostAPI(APIView):
         serializer = PostSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save(author=request.user)
+            serializer.save(author=request.user, is_active = True)
             return Response({
                 "message":"Blog created successfully",
                 "data": serializer.data
@@ -31,8 +32,7 @@ class ListPostAPI(APIView):
     permission_classes= [IsAuthenticated]
 
     def get(self, request):
-        posts = Post.objects.filter(is_published =True)
-        
+        posts = Post.objects.filter(is_published=True).order_by("created_at")        
         category = request.GET.get("category")
         if category:
             posts = posts.filter(category__name__icontains=category)
@@ -43,9 +43,14 @@ class ListPostAPI(APIView):
                 Q(title__icontains=search) | Q(category__name__icontains=search)
             )
         
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data,status=status.HTTP_200_OK)
+        paginator = PageNumberPagination()
+        paginator.page_size = 5  # posts per page
 
+        paginated_posts = paginator.paginate_queryset(posts, request)
+
+        serializer = PostSerializer(paginated_posts, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
 class ViewPostAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -65,11 +70,14 @@ class ViewPostAPI(APIView):
 
 class MyPostsAPI(APIView):
     def get(self, request):
-        posts = Post.objects.filter(is_active = True, author = request.user)
-        #posts = posts.filter(posts.author == request.author)
-        serializer = PostSerializer(posts, many = True)
-        return Response(serializer.data,status=status.HTTP_200_OK)
+        posts = Post.objects.filter(is_active = True, author = request.user).order_by("created_at")
+        paginator = PageNumberPagination()
+        paginator.page_size = 5  # posts per page
 
+        paginated_posts = paginator.paginate_queryset(posts, request)
+        serializer = PostSerializer(paginated_posts, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
 class UpdatePostAPI(APIView):
     permission_classes = [IsAdmin | IsAuthor]
 
